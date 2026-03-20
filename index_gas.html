@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imbema — Gas ROI Calculator</title>
+<meta name="description" content="Bereken de ROI van gasmetingen en lekdetectie voor uw klant. Een tool van Imbema Asset Solutions.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Imbema Gas ROI">
+<meta name="theme-color" content="#002147">
+<style>
+:root{
+  --navy:#002147;--mid:#1B4F84;--light:#2E75B6;
+  --cyan:#00AEEF;--cyan-dim:#E6F6FD;
+  --orange:#E8720C;--orange-dim:#FDF0E6;
+  --bg:#F4F7FB;--white:#fff;--border:#DDE6F0;
+  --text:#1A2E42;--muted:#5A7A96;
+  --green-bg:#E6F4EE;--green:#0A6640;
+  --amber-bg:#FFF3CD;--amber:#7A4F00;
+  --blue-bg:#E6F1FB;--red:#A32D2D;--red-bg:#FDECEA;
+  --r:12px;--rs:8px;
+  --sh:0 1px 3px rgba(0,33,71,.08),0 4px 16px rgba(0,33,71,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;min-height:100vh}
+
+/* TOPBAR */
+.bar{background:var(--navy);height:56px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--orange);position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-ring{width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center}
+.logo-dot{width:11px;height:11px;border-radius:50%;background:var(--cyan)}
+.logo-name{font-size:16px;font-weight:600;color:#fff}
+.logo-tag{font-size:11px;color:rgba(255,255,255,.45)}
+.bar-right{display:flex;align-items:center;gap:10px}
+.bar-label{font-size:12px;color:rgba(255,255,255,.38)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--rs);font-size:12px;font-family:inherit;font-weight:500;cursor:pointer;border:none;transition:opacity .15s,transform .1s;white-space:nowrap}
+.btn:hover{opacity:.85}.btn:active{transform:scale(.98)}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28)}
+
+/* HERO */
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#1B3A6B 100%);padding:1.75rem 2rem 1.5rem}
+.hero-in{max-width:1140px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.hero h1{font-size:24px;font-weight:600;color:#fff;line-height:1.2;margin-bottom:.3rem}
+.hero h1 em{color:var(--orange);font-style:normal}
+.hero p{font-size:13px;color:rgba(255,255,255,.58)}
+.hero-btns{display:flex;gap:.6rem;flex-shrink:0}
+
+/* LAYOUT */
+.wrap{max-width:1140px;margin:0 auto;padding:1.75rem 2rem;display:grid;grid-template-columns:400px 1fr;gap:1.5rem;align-items:start}
+
+/* PANELS */
+.panel{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--border);margin-bottom:1.2rem;overflow:visible}
+.panel:last-child{margin-bottom:0}
+.ph{background:var(--navy);padding:.75rem 1.25rem;display:flex;align-items:center;gap:8px;border-radius:var(--r) var(--r) 0 0}
+.ph-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0}
+.ph h2{font-size:11px;font-weight:600;color:#fff;letter-spacing:.06em;text-transform:uppercase}
+.pb{padding:1.2rem}
+
+/* FIELDS */
+.field{margin-bottom:1.1rem}.field:last-child{margin-bottom:0}
+.fl{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.fl label{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.fv{font-size:13px;font-weight:600;color:var(--mid);font-family:'Consolas','Courier New',monospace}
+.fh{font-size:11px;color:var(--muted);margin-top:4px;font-style:italic;line-height:1.5}
+.divider{height:1px;background:var(--border);margin:.9rem 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+
+/* TOOLTIP */
+#tip{position:fixed;background:var(--navy);color:#fff;font-size:12px;line-height:1.6;padding:9px 13px;border-radius:8px;max-width:260px;z-index:9999;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:0 4px 20px rgba(0,33,71,.3)}
+.tipbtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:var(--orange-dim);color:var(--orange);font-size:10px;font-weight:700;cursor:help;flex-shrink:0;transition:background .15s}
+.tipbtn:hover{background:var(--orange);color:#fff}
+
+/* INPUTS */
+.toggle{display:flex;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden}
+.tob{flex:1;padding:7px 0;font-size:12px;font-weight:500;font-family:inherit;background:var(--bg);color:var(--muted);border:none;cursor:pointer;transition:background .15s,color .15s}
+.tob.on{background:var(--mid);color:#fff}
+select,input[type=text]{width:100%;height:40px;border:1px solid var(--border);border-radius:var(--rs);background:var(--bg);color:var(--text);font-size:16px;font-family:inherit;padding:0 10px;transition:border-color .15s}
+select{padding:0 28px 0 10px;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%235A7A96' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:var(--bg)}
+select:focus,input[type=text]:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(232,114,12,.12)}
+input[type=text]::placeholder{color:var(--muted)}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;margin-top:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--mid);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,33,71,.22);cursor:pointer;transition:background .15s}
+input[type=range]:hover::-webkit-slider-thumb{background:var(--orange)}
+
+/* SAVING BOX */
+.sbox{background:var(--orange-dim);border-radius:var(--rs);padding:.7rem 1rem;margin-top:6px;border-left:3px solid var(--orange)}
+.srow{display:flex;justify-content:space-between;font-size:12px;color:#7A3500;margin-bottom:3px}
+.srow:last-child{margin-bottom:0;font-weight:600;border-top:1px dashed rgba(232,114,12,.3);padding-top:5px;margin-top:5px;font-size:13px}
+.stitle{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+
+/* SAFETY BOX */
+.safetybox{background:var(--red-bg);border-radius:var(--rs);padding:.7rem 1rem;margin-top:6px;border-left:3px solid var(--red)}
+.safetybox .stitle{color:var(--red)}
+.srow-red{display:flex;justify-content:space-between;font-size:12px;color:#7A1A1A;margin-bottom:3px}
+.srow-red:last-child{margin-bottom:0;font-weight:600;border-top:1px dashed rgba(192,57,43,.25);padding-top:5px;margin-top:5px;font-size:13px;color:var(--red)}
+
+/* KPI CARDS */
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.2rem}
+.kc{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:.875rem 1rem;box-shadow:0 1px 3px rgba(0,33,71,.07)}
+.kc.hi{background:var(--navy);border-color:var(--navy)}
+.kc.or{background:var(--orange);border-color:var(--orange)}
+.kl{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
+.kc.hi .kl,.kc.or .kl{color:rgba(255,255,255,.6)}
+.kv{font-size:20px;font-weight:600;color:var(--text);font-family:'Consolas','Courier New',monospace;line-height:1}
+.kc.hi .kv,.kc.or .kv{color:#fff}
+.ks{font-size:11px;color:var(--muted);margin-top:4px}
+.kc.hi .ks,.kc.or .ks{color:rgba(255,255,255,.45)}
+
+/* VERDICT */
+.verdict{border-radius:var(--r);padding:.875rem 1.1rem;display:flex;align-items:flex-start;gap:10px;margin-bottom:1.2rem}
+.vi{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+
+/* CHART PANELS */
+.cp{background:var(--white);border-radius:var(--r);border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,33,71,.07);overflow:hidden;margin-bottom:1rem}
+.cp:last-child{margin-bottom:0}
+.ch{padding:.65rem 1.25rem;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:7px}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--orange)}
+.cb{padding:1rem 1.25rem}
+
+/* BARS */
+.brow{display:flex;align-items:center;gap:10px;margin-bottom:8px}.brow:last-child{margin-bottom:0}
+.blbl{font-size:12px;color:var(--muted);width:140px;text-align:right;flex-shrink:0}
+.btrack{flex:1;height:24px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.bfill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 9px;transition:width .45s cubic-bezier(.4,0,.2,1);min-width:52px}
+.bval{font-size:11px;font-weight:600;color:#fff;font-family:'Consolas','Courier New',monospace;white-space:nowrap}
+
+/* TIMELINE */
+.trow{display:grid;grid-template-columns:52px 1fr 88px;gap:9px;align-items:center;margin-bottom:7px}.trow:last-child{margin-bottom:0}
+.tq{font-size:12px;color:var(--muted);font-weight:500}
+.ttrack{height:17px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.tfill{height:100%;border-radius:3px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+.tval{font-size:12px;font-weight:600;font-family:'Consolas','Courier New',monospace;text-align:right}
+
+/* SCENARIO TABLE */
+.stbl{width:100%;border-collapse:collapse;font-size:12px}
+.stbl th{background:var(--navy);color:#fff;padding:8px 12px;text-align:left;font-weight:500;font-size:11px}
+.stbl td{padding:8px 12px;border-bottom:1px solid var(--border);color:var(--text)}
+.stbl tr:last-child td{border-bottom:none}
+.stbl tr:nth-child(even) td{background:var(--bg)}
+.stbl td.g{color:var(--green);font-weight:600}
+.stbl td.w{color:var(--amber);font-weight:600}
+.stbl td.r{color:var(--red);font-weight:600}
+.stbl td.n{font-family:'Consolas','Courier New',monospace}
+
+/* BADGE */
+.badge{display:inline-flex;background:var(--orange-dim);color:var(--orange);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:.9rem}
+
+/* MODAL */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,21,47,.6);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem;overflow-y:auto;visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s}
+.overlay.show{visibility:visible;opacity:1}
+.modal{background:var(--white);border-radius:var(--r);width:100%;max-width:800px;margin:auto;box-shadow:0 8px 48px rgba(0,21,47,.3)}
+.mh{background:var(--navy);padding:1.1rem 1.5rem;border-radius:var(--r) var(--r) 0 0;display:flex;align-items:center;justify-content:space-between}
+.mh-txt h2{font-size:16px;font-weight:600;color:#fff}
+.mh-txt p{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.mclose{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1}
+.mclose:hover{background:rgba(255,255,255,.25)}
+.mb{padding:1.5rem}
+.hsec{margin-bottom:1.5rem}.hsec:last-child{margin-bottom:0}
+.hsec h3{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:.65rem;padding-bottom:.4rem;border-bottom:2px solid var(--orange);display:flex;align-items:center;gap:8px}
+.hnum{width:22px;height:22px;border-radius:50%;background:var(--orange);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.hcard{background:var(--bg);border-radius:var(--rs);padding:.875rem 1rem;border:1px solid var(--border)}
+.hcard h4{font-size:12px;font-weight:600;color:var(--mid);margin-bottom:.3rem}
+.hcard p{font-size:12px;color:var(--muted);line-height:1.6}
+.htag{display:inline-block;background:var(--orange-dim);color:var(--orange);font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;margin-bottom:.4rem}
+.htbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:.5rem}
+.htbl th{background:var(--navy);color:#fff;padding:7px 10px;text-align:left;font-weight:500;font-size:11px}
+.htbl td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--muted);line-height:1.55;vertical-align:top}
+.htbl tr:last-child td{border-bottom:none}
+.htbl tr:nth-child(even) td{background:var(--bg)}
+.htbl td:first-child{font-weight:600;color:var(--mid);white-space:nowrap}
+.htip{background:var(--orange-dim);border-left:3px solid var(--orange);border-radius:0 var(--rs) var(--rs) 0;padding:.7rem 1rem;font-size:12px;color:#7A3500;line-height:1.6;margin-top:.75rem}
+.htip strong{font-weight:600;color:var(--navy)}
+
+/* PRINT */
+.print-only{display:none}
+@media print{
+  .bar,.hero-btns,.input-col,.overlay{display:none!important}
+  .print-only{display:block}
+  body{background:#fff;font-size:11px}
+  .wrap{grid-template-columns:1fr;padding:0;gap:1rem}
+  .cp,.kc,.verdict,.ph{print-color-adjust:exact;-webkit-print-color-adjust:exact;break-inside:avoid}
+}
+
+/* FOOTER */
+.footer{text-align:center;padding:1.25rem 2rem;color:var(--muted);font-size:12px;border-top:1px solid var(--border);margin-top:.5rem}
+.footer strong{color:var(--mid)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .wrap{grid-template-columns:1fr;padding:1rem}
+  .krow{grid-template-columns:repeat(2,1fr)}
+  .hero-in{flex-direction:column;align-items:flex-start}
+  .grid2{grid-template-columns:1fr}
+  .hgrid{grid-template-columns:1fr}
+  .bar-right .bar-label{display:none}
+}
+@media(max-width:540px){
+  .krow{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:1.25rem 1rem}
+  .hero h1{font-size:19px}
+  .hero-btns{flex-direction:column;width:100%}
+  .hero-btns .btn{width:100%;justify-content:center}
+  .bar{padding:0 1rem}
+  .wrap{padding:.875rem 1rem}
+  .pb{padding:.875rem}
+  .blbl{width:100px;font-size:11px}
+  .trow{grid-template-columns:44px 1fr 80px}
+  .stbl{font-size:11px}
+  .stbl th,.stbl td{padding:5px 7px}
+}
+@supports(padding:max(0px)){
+  .bar{padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right))}
+  .wrap,.hero{padding-left:max(1rem,env(safe-area-inset-left));padding-right:max(1rem,env(safe-area-inset-right))}
+}
+</style>
+</head>
+<body>
+
+<!-- Wachtwoord -->
+<script>
+(function(){
+  const PASS='imbema2026';
+  const KEY='imbema_gas_auth';
+  if(sessionStorage.getItem(KEY)===PASS) return;
+  document.addEventListener('DOMContentLoaded',function(){
+    document.body.style.display='none';
+    var o=document.createElement('div');
+    o.style.cssText='position:fixed;inset:0;background:#002147;display:flex;align-items:center;justify-content:center;z-index:99999;font-family:Segoe UI,Arial,sans-serif;padding:1rem';
+    o.innerHTML=`<div style="background:#fff;border-radius:16px;padding:2.5rem;width:100%;max-width:380px;box-shadow:0 8px 48px rgba(0,0,0,.35);text-align:center">
+      <div style="width:48px;height:48px;border-radius:50%;background:#002147;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+        <div style="width:16px;height:16px;border-radius:50%;background:#00AEEF"></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#5A7A96;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.25rem">Imbema Asset Solutions</div>
+      <div style="font-size:20px;font-weight:600;color:#002147;margin-bottom:.25rem">Gas ROI Calculator</div>
+      <div style="font-size:13px;color:#5A7A96;margin-bottom:1.5rem">Intern gebruik — voer het wachtwoord in</div>
+      <input id="pw" type="password" placeholder="Wachtwoord" autocomplete="current-password"
+        style="width:100%;height:44px;border:2px solid #DDE6F0;border-radius:8px;padding:0 14px;font-size:16px;font-family:inherit;outline:none;margin-bottom:.75rem"
+        onfocus="this.style.borderColor='#E8720C'" onblur="this.style.borderColor='#DDE6F0'">
+      <div id="pw-err" style="color:#A32D2D;font-size:12px;margin-bottom:.75rem;display:none">Onjuist wachtwoord</div>
+      <button id="pw-btn" style="width:100%;height:44px;background:#E8720C;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">Inloggen</button>
+      <div style="font-size:11px;color:#5A7A96;margin-top:1.25rem">Geen toegang? Neem contact op met Asset Solutions</div>
+    </div>`;
+    document.body.parentNode.insertBefore(o,document.body);
+    document.body.style.display='';
+    function tryLogin(){
+      var v=document.getElementById('pw').value;
+      if(v===PASS){sessionStorage.setItem(KEY,PASS);o.style.display='none';}
+      else{document.getElementById('pw-err').style.display='block';document.getElementById('pw').value='';document.getElementById('pw').focus();}
+    }
+    document.getElementById('pw-btn').addEventListener('click',tryLogin);
+    document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')tryLogin();});
+    document.getElementById('pw').focus();
+  });
+})();
+</script>
+
+<!-- Tooltip -->
+<div id="tip"></div>
+
+<!-- Help Modal -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-txt">
+        <h2>Handleiding — Gas ROI Calculator</h2>
+        <p>Leer hoe u de calculator optimaal gebruikt per sector</p>
+      </div>
+      <button class="mclose" id="mclose">&#x2715;</button>
+    </div>
+    <div class="mb">
+      <div class="hsec">
+        <h3><span class="hnum">1</span>Gasverbruik & prijs</h3>
+        <table class="htbl">
+          <thead><tr><th>Veld</th><th>Uitleg</th><th>Tip</th></tr></thead>
+          <tbody>
+            <tr><td>Eenheid</td><td>m³ is het meest gangbaar op gasfacturen. GJ wordt gebruikt bij grote industriële afnemers en WKK-installaties.</td><td>Kijk op de factuur welke eenheid gebruikt wordt. Omrekenfactor: 1 m³ aardgas ≈ 31,65 MJ = 0,03165 GJ.</td></tr>
+            <tr><td>Jaarlijks verbruik</td><td>Totaal gasverbruik per jaar. Klein kantoor: 5.000–20.000 m³. Restaurant: 20.000–80.000 m³. Fabriek: 100.000–10.000.000 m³.</td><td>Staat op de jaarafrekening als "totaal verbruik". Bij twijfel: gebruik de maandafrekening × 12.</td></tr>
+            <tr><td>Gasprijs</td><td>De alles-in prijs inclusief netkosten, belastingen en leveringskosten. Sterk gestegen na 2022. Instelbaar tot €3,00/m³.</td><td>Normaal: €0,80–1,20/m³ voor zakelijk. Tijdens de energiecrisis 2022 tijdelijk boven €2,00/m³.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hsec">
+        <h3><span class="hnum">2</span>KPI's — wat meet je bij gas?</h3>
+        <div class="hgrid">
+          <div class="hcard"><div class="htag">Lekverliezen</div><h4>Typisch 2–8% van verbruik</h4><p>Lekverliezen in leidingen en koppelingen zijn onzichtbaar maar kostbaar. Met tussenmeting worden ze direct zichtbaar.</p></div>
+          <div class="hcard"><div class="htag">Verbrandingsrendement</div><h4>Van 85% naar 95%+</h4><p>Verouderde branders verbranden inefficiënt. Door meting van voor- en nadruk en debiet kan rendement worden berekend en verbeterd.</p></div>
+          <div class="hcard"><div class="htag">Piekverbruik afvlakken</div><h4>Transporttarief besparing</h4><p>Netbeheerders rekenen ook bij gas een tarief voor piekafname. Inzicht in dagpatronen maakt afvlakking mogelijk.</p></div>
+          <div class="hcard"><div class="htag">Veiligheid & compliance</div><h4>NPR 7244 / NEN 1078</h4><p>Gaslekmeting is verplicht bij industriële installaties. Aantoonbare monitoring verlaagt verzekeringskosten en voorkomt boetes.</p></div>
+          <div class="hcard"><div class="htag">Stoom & WKK</div><h4>Alleen industrie</h4><p>Stoomproductie en WKK-installaties hebben een hoog gasverbruik. Submetering per installatie toont het werkelijke rendement.</p></div>
+          <div class="hcard"><div class="htag">EED-rapportage</div><h4>Wettelijke verplichting</h4><p>Gasverbruik moet worden meegenomen in de EED-audit. Zonder meting per locatie/afdeling is rapportage onmogelijk.</p></div>
+        </div>
+        <div class="htip"><strong>Sector-specifiek:</strong> Industrie scoort het hoogst op rendementverbetering en lekverliezen. Horeca op verbrandingsrendement (verouderde branders). Gebouwen op piekafvlakking en EED. Recreatie op eerlijke doorbelasting per accommodatie.</div>
+      </div>
+      <div class="hsec">
+        <h3><span class="hnum">3</span>Veiligheidswaarden begrijpen</h3>
+        <table class="htbl">
+          <thead><tr><th>Waarde</th><th>Wat het betekent</th><th>Typisch bedrag</th></tr></thead>
+          <tbody>
+            <tr><td>Verzekeringskorting</td><td>Verzekeraars geven korting op de premie bij aantoonbare gasmonitoringssystemen en gecertificeerde detectie.</td><td>2–8% van jaarlijkse premie</td></tr>
+            <tr><td>Boeterisico vermeden</td><td>Bij niet-naleving van NPR 7244 of NEN 1078 kunnen de Inspectie SZW en omgevingsdienst boetes opleggen.</td><td>€5.000–50.000 per incident</td></tr>
+            <tr><td>Stilstand vermeden</td><td>Een gasincident leidt tot bedrijfsstilstand. Waarde = dagomzet × gemiddeld aantal stilstanddagen bij incident.</td><td>Sector-afhankelijk</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="hsec">
+        <h3><span class="hnum">4</span>Opslaan en delen</h3>
+        <div class="hgrid">
+          <div class="hcard"><div class="htag">Opslaan als bestand</div><h4>Per klant bewaren</h4><p>Sla de pagina op als HTML-bestand met de klantnaam. Alle ingevulde waarden blijven bewaard.</p></div>
+          <div class="hcard"><div class="htag">Afdrukken / PDF</div><h4>Meesturen met offerte</h4><p>Kies "Opslaan als PDF" in Chrome of Safari. Alleen de resultaten zijn zichtbaar — klaar voor de offerte.</p></div>
+        </div>
+        <div class="htip"><strong>Wachtwoord wijzigen:</strong> Open het HTML-bestand in een teksteditor, zoek naar <strong>imbema2026</strong> en vervang dit door uw eigen wachtwoord. Sla op en upload opnieuw naar GitHub.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Topbar -->
+<div class="bar">
+  <div class="logo">
+    <div class="logo-ring"><div class="logo-dot"></div></div>
+    <div><div class="logo-name">imbema</div><div class="logo-tag">Technical solutions for generations</div></div>
+  </div>
+  <div class="bar-right">
+    <span class="bar-label">Asset Solutions — Gas ROI Calculator v1.0</span>
+    <button class="btn btn-orange" id="btn-help">? Handleiding</button>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-in">
+    <div>
+      <h1>Gas ROI-calculator <em>meting &amp; lekdetectie</em></h1>
+      <p>Bereken de terugverdientijd van gasinstallatie-meting voor industrie, horeca, gebouwen en recreatie.</p>
+    </div>
+    <div class="hero-btns">
+      <button class="btn btn-ghost" id="btn-save">&#128190; Opslaan als bestand</button>
+      <button class="btn btn-orange" onclick="window.print()">&#128424; Afdrukken / PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- INPUT -->
+  <div class="input-col">
+
+    <div class="panel">
+      <div class="ph"><div class="ph-dot"></div><h2>Klantgegevens</h2></div>
+      <div class="pb">
+        <div class="grid2">
+          <div class="field"><div class="fl"><label>Bedrijfsnaam</label></div><input type="text" id="k-naam" placeholder="bijv. Restaurant De Hoek"></div>
+          <div class="field"><div class="fl"><label>Contactpersoon</label></div><input type="text" id="k-contact" placeholder="bijv. Jan de Vries"></div>
+        </div>
+        <div class="field" style="margin-top:.5rem">
+          <div class="fl"><label>Sector</label></div>
+          <select id="s-sector">
+            <option value="industrie">Industrie (stoom, WKK, verbranding)</option>
+            <option value="horeca">Horeca &amp; restaurants</option>
+            <option value="gebouw">Gebouwen &amp; kantoren</option>
+            <option value="recreatie">Recreatie &amp; vakantieparken</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl"><label>Aantal meetpunten gas</label><span class="fv" id="v-meters">5</span></div>
+          <input type="range" id="s-meters" min="1" max="100" step="1" value="5">
+          <div class="fh">Afzonderlijke gasmeetpunten (per installatie, afdeling of accommodatie).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-dot"></div><h2>Gasprofiel</h2></div>
+      <div class="pb">
+        <div class="field">
+          <div class="fl"><label>Eenheid</label></div>
+          <div class="toggle">
+            <button class="tob on" id="btn-m3">m³ &amp; €/m³</button>
+            <button class="tob" id="btn-gj">GJ &amp; €/GJ</button>
+          </div>
+        </div>
+        <div class="field">
+          <div class="fl"><label id="cons-lbl">Jaarlijks gasverbruik (m³)</label><span class="fv" id="v-cons">50.000 m³</span></div>
+          <input type="range" id="s-cons" min="1" max="1000" step="1" value="167">
+          <div class="fh" id="h-cons">Klein kantoor ≈ 5.000–20.000 m³ · Restaurant ≈ 20.000–80.000 m³ · Fabriek 100.000–10.000.000 m³</div>
+        </div>
+        <div class="field">
+          <div class="fl"><label id="price-lbl">Gasprijs (€/m³)</label><span class="fv" id="v-price">€ 1,00</span></div>
+          <input type="range" id="s-price" min="1" max="300" step="1" value="100">
+          <div class="fh" id="h-price">Incl. netkosten &amp; belastingen. Normaal ≈ €0,80–1,20/m³ · Piekprijzen tot €3,00/m³</div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <div class="fl">
+            <label>Lekverliezen huidig
+              <span class="tipbtn" data-tip="Lekverliezen in gasleidingen en koppelingen zijn vaak onzichtbaar. Typisch 2–8% van het totale verbruik. Met tussenmeting worden afwijkingen direct zichtbaar op het dashboard.">?</span>
+            </label>
+            <span class="fv" id="v-lek">4%</span>
+          </div>
+          <input type="range" id="s-lek" min="1" max="15" step="1" value="4">
+        </div>
+        <div class="field">
+          <div class="fl">
+            <label>Rendementverbetering mogelijk
+              <span class="tipbtn" data-tip="Door betere monitoring van verbrandingsinstallaties kan het rendement worden verbeterd. Verouderde branders werken vaak op 80–85% rendement. Met optimalisatie haalbaar: 90–96%.">?</span>
+            </label>
+            <span class="fv" id="v-rend">5%</span>
+          </div>
+          <input type="range" id="s-rend" min="0" max="15" step="1" value="5">
+        </div>
+        <div class="field">
+          <div class="fl">
+            <label>Piekverbruik reductie
+              <span class="tipbtn" data-tip="Door inzicht in verbruikspatronen kan piekafname worden gespreide. Dit verlaagt het transporttarief bij de netbeheerder. Typisch 2–8% besparing op totale gaskosten.">?</span>
+            </label>
+            <span class="fv" id="v-piek">3%</span>
+          </div>
+          <input type="range" id="s-piek" min="0" max="10" step="1" value="3">
+        </div>
+        <div class="sbox">
+          <div class="stitle">Indicatieve besparing gasverbruik</div>
+          <div class="srow"><span>Lekverliezen elimineren</span><span id="sb1">—</span></div>
+          <div class="srow"><span>Rendementverbetering</span><span id="sb2">—</span></div>
+          <div class="srow"><span>Piekverbruik afvlakken</span><span id="sb3">—</span></div>
+          <div class="srow"><span>Totale gasbesparing / jaar</span><span id="sbt">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-dot"></div><h2>Veiligheid &amp; Compliance</h2></div>
+      <div class="pb">
+        <div class="field">
+          <div class="fl">
+            <label>Verzekeringskorting (jaarlijks)
+              <span class="tipbtn" data-tip="Verzekeraars geven korting bij aantoonbare gasmonitoringssystemen. Typisch 2–8% van de brandverzekering. Vraag de klant naar de huidige premie om dit te berekenen.">?</span>
+            </label>
+            <span class="fv" id="v-verz">€ 2.000</span>
+          </div>
+          <input type="range" id="s-verz" min="0" max="20000" step="500" value="2000">
+        </div>
+        <div class="field">
+          <div class="fl">
+            <label>Boeterisico vermeden (jaarlijks)
+              <span class="tipbtn" data-tip="Bij niet-naleving van NPR 7244 of NEN 1078 kunnen de Inspectie SZW en omgevingsdienst boetes opleggen van €5.000 tot €50.000 per incident. Gebruik een jaarlijkse kans-gewogen waarde.">?</span>
+            </label>
+            <span class="fv" id="v-boete">€ 3.000</span>
+          </div>
+          <input type="range" id="s-boete" min="0" max="30000" step="500" value="3000">
+        </div>
+        <div class="field">
+          <div class="fl">
+            <label>Stilstandrisico vermeden (jaarlijks)
+              <span class="tipbtn" data-tip="Een gasincident leidt tot bedrijfsstilstand. Waarde = geschatte jaarlijkse kans op incident × kosten van stilstand (dagomzet × aantal stilstanddagen).">?</span>
+            </label>
+            <span class="fv" id="v-stilstand">€ 5.000</span>
+          </div>
+          <input type="range" id="s-stilstand" min="0" max="100000" step="1000" value="5000">
+        </div>
+        <div class="safetybox">
+          <div class="stitle">Veiligheids- &amp; compliance-waarde</div>
+          <div class="srow-red"><span>Verzekeringskorting</span><span id="safe1">—</span></div>
+          <div class="srow-red"><span>Boeterisico vermeden</span><span id="safe2">—</span></div>
+          <div class="srow-red"><span>Stilstandrisico vermeden</span><span id="safe3">—</span></div>
+          <div class="srow-red"><span>Totale veiligheidswaarde / jaar</span><span id="safet">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><div class="ph-dot"></div><h2>Projectconfiguratie</h2></div>
+      <div class="pb">
+        <div class="field">
+          <div class="fl"><label>As-a-Service pakket</label></div>
+          <select id="s-pkg">
+            <option value="inzicht">Inzicht — €199/mnd (meting + dashboard)</option>
+            <option value="controle" selected>Controle — €399/mnd (+ alerts + EED-export)</option>
+            <option value="safety">Safety+ — €699/mnd (+ lekdetectie + compliance)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="fl"><label>Installatiekosten (eenmalig)</label><span class="fv" id="v-install">€ 15.000</span></div>
+          <input type="range" id="s-install" min="1000" max="100000" step="500" value="15000">
+          <div class="fh">Gasmeters, leidingdruksensoren, communicatie en inbedrijfstelling.</div>
+        </div>
+        <div class="field">
+          <div class="fl"><label>Maandelijkse SLA / licentie</label><span class="fv" id="v-monthly">€ 399</span></div>
+          <input type="range" id="s-monthly" min="99" max="2000" step="50" value="399">
+        </div>
+        <div class="field">
+          <div class="fl">
+            <label>EED / CO₂ compliance-waarde
+              <span class="tipbtn" data-tip="Gasverbruik moet worden gerapporteerd in de EED-audit. Zonder meting per locatie is dit onmogelijk. Waarde = besparing op externe auditkosten + waarde van betere CO₂-rapportage voor ESG-score.">?</span>
+            </label>
+            <span class="fv" id="v-eed">€ 4.000</span>
+          </div>
+          <input type="range" id="s-eed" min="0" max="20000" step="500" value="4000">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results">
+
+    <div class="print-only panel" style="padding:1rem;margin-bottom:1rem">
+      <strong id="pm-naam" style="font-size:15px"></strong><br>
+      <span style="font-size:12px;color:var(--muted)">Contact: <span id="pm-contact"></span> · Sector: <span id="pm-sector"></span> · Datum: <span id="pm-datum"></span></span>
+    </div>
+
+    <div id="badge" class="badge">Industrie</div>
+
+    <div class="krow">
+      <div class="kc"><div class="kl">Jaarlijkse gasbesparing</div><div class="kv" id="r-gasbesparing">—</div><div class="ks">verbruiksreductie</div></div>
+      <div class="kc"><div class="kl">Veiligheidswaarde</div><div class="kv" id="r-safety">—</div><div class="ks">verzekering + compliance</div></div>
+      <div class="kc"><div class="kl">Terugverdientijd</div><div class="kv" id="r-payback">—</div><div class="ks">break-even punt</div></div>
+      <div class="kc hi"><div class="kl">3-jaar netto voordeel</div><div class="kv" id="r-npv">—</div><div class="ks">na alle kosten</div></div>
+    </div>
+
+    <div id="verdict" class="verdict"></div>
+
+    <div class="cp">
+      <div class="ch"><div class="cdot"></div>Cumulatief rendement per jaar</div>
+      <div class="cb" id="cashflow-chart"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1rem">
+      <div class="cp" style="margin-bottom:0">
+        <div class="ch"><div class="cdot"></div>Batenstructuur per jaar</div>
+        <div class="cb" id="baten-chart"></div>
+      </div>
+      <div class="cp" style="margin-bottom:0">
+        <div class="ch"><div class="cdot"></div>Kostenverdeling jaar 1</div>
+        <div class="cb" id="kosten-chart"></div>
+      </div>
+    </div>
+
+    <div class="cp">
+      <div class="ch"><div class="cdot"></div>Scenario-analyse — effect van verschillende lekverliezen</div>
+      <div class="cb">
+        <table class="stbl">
+          <thead><tr><th>Scenario</th><th>Lekv. %</th><th>Gasbesparing/jr</th><th>Totaal voordeel/jr</th><th>Terugverdientijd</th><th>3-jr netto</th></tr></thead>
+          <tbody id="scen-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="cp">
+      <div class="ch"><div class="cdot"></div>Maandelijks gasverbruik — voor vs. na</div>
+      <div class="cb" id="monthly-chart"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <strong>Imbema Asset Solutions</strong> — Gas ROI Calculator &nbsp;|&nbsp; Intern gebruik &nbsp;|&nbsp; Resultaten zijn indicatief op basis van ingevoerde gegevens
+</div>
+
+<script>
+const q  = id => document.getElementById(id);
+const euro  = v => '€\u00a0' + Math.round(v).toLocaleString('nl-NL');
+const euroK = v => { const r=Math.round(v); return Math.abs(r)>=1000?'€\u00a0'+(r/1000).toFixed(Math.abs(r)%1000===0?0:1).replace('.',',')+' K':'€\u00a0'+r.toLocaleString('nl-NL'); };
+const mnd   = v => { const r=Math.round(v); return r<120?r+' mnd':'>10 jr'; };
+
+// Tooltip
+const tipEl = q('tip');
+document.querySelectorAll('.tipbtn').forEach(el => {
+  el.addEventListener('mouseenter', e => { tipEl.textContent=el.dataset.tip; tipEl.style.opacity='1'; moveTip(e); });
+  el.addEventListener('mousemove', moveTip);
+  el.addEventListener('mouseleave', () => tipEl.style.opacity='0');
+});
+function moveTip(e){ const m=14,w=tipEl.offsetWidth||260,h=tipEl.offsetHeight||60; let x=e.clientX+m,y=e.clientY+m; if(x+w>window.innerWidth-8)x=e.clientX-w-m; if(y+h>window.innerHeight-8)y=e.clientY-h-m; tipEl.style.left=x+'px';tipEl.style.top=y+'px'; }
+
+// Modal
+const overlay=q('overlay');
+q('btn-help').addEventListener('click',()=>{ overlay.classList.add('show'); overlay.scrollTop=0; document.body.style.overflow='hidden'; });
+q('mclose').addEventListener('click',closeModal);
+overlay.addEventListener('click',e=>{ if(e.target===overlay)closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeModal(); });
+function closeModal(){ overlay.classList.remove('show'); document.body.style.overflow=''; }
+
+// Unit
+let unit='m3';
+q('btn-m3').addEventListener('click',()=>setUnit('m3'));
+q('btn-gj').addEventListener('click',()=>setUnit('gj'));
+
+function posToConsumption(pos){
+  pos=Math.round(pos);
+  if(unit==='m3') return pos<=100?pos*500:50000+(pos-100)*5000;
+  else            return pos<=100?pos*0.5:50+(pos-100)*5;
+}
+function consumptionToPos(val){
+  if(unit==='m3') return val<=50000?Math.round(val/500):Math.round(100+(val-50000)/5000);
+  else            return val<=50?Math.round(val/0.5):Math.round(100+(val-50)/5);
+}
+function getConsumptionInNaturalUnit(){ return posToConsumption(+q('s-cons').value); }
+// Always returns m³ for calculation (1 GJ = 31.746 m³ aardgas approximately)
+function getConsM3(){ const v=getConsumptionInNaturalUnit(); return unit==='m3'?v:v*31.746; }
+// Price per m³ for calculation
+function getPriceM3(){ const n=+q('s-price').value/100; return unit==='m3'?n:n/31.746; }
+
+function setUnit(u){
+  const curM3=getConsM3();
+  const curPriceM3=getPriceM3();
+  unit=u;
+  q('btn-m3').classList.toggle('on',u==='m3');
+  q('btn-gj').classList.toggle('on',u==='gj');
+  if(u==='m3'){
+    q('cons-lbl').textContent='Jaarlijks gasverbruik (m³)';
+    q('price-lbl').textContent='Gasprijs (€/m³)';
+    q('h-price').textContent='Incl. netkosten & belastingen. Normaal ≈ €0,80–1,20/m³ · Piekprijzen tot €3,00/m³';
+    q('s-price').value=Math.min(300,Math.max(1,Math.round(curPriceM3*100)));
+  } else {
+    q('cons-lbl').textContent='Jaarlijks gasverbruik (GJ)';
+    q('price-lbl').textContent='Gasprijs (€/GJ)';
+    q('h-price').textContent='Incl. netkosten & belastingen. Normaal ≈ €25–40/GJ · Piekprijzen tot €95/GJ';
+    q('s-price').value=Math.min(300,Math.max(1,Math.round(curPriceM3*31.746*100)));
+  }
+  const newConsVal=u==='m3'?curM3:curM3/31.746;
+  q('s-cons').value=consumptionToPos(newConsVal);
+  calc();
+}
+
+// Sector defaults
+const DEF={
+  industrie:{meters:15,consM3:500000,priceM3:0.95,lek:5,rend:8,piek:3,install:35000,monthly:699,verz:8000,boete:10000,stilstand:20000,eed:8000,lbl:'Industrie'},
+  horeca:   {meters:3, consM3:40000, priceM3:1.05,lek:3,rend:10,piek:2,install:8000, monthly:299,verz:1500,boete:2000, stilstand:5000, eed:2000,lbl:'Horeca & restaurants'},
+  gebouw:   {meters:5, consM3:80000, priceM3:0.90,lek:3,rend:5, piek:4,install:12000,monthly:399,verz:3000,boete:3000, stilstand:8000, eed:5000,lbl:'Gebouwen & kantoren'},
+  recreatie:{meters:10,consM3:60000, priceM3:0.95,lek:4,rend:4, piek:2,install:15000,monthly:399,verz:2000,boete:2000, stilstand:5000, eed:3000,lbl:'Recreatie & vakantieparken'},
+};
+
+function applyDefaults(){
+  const d=DEF[q('s-sector').value]; if(!d) return;
+  q('s-meters').value=d.meters;
+  const consVal=unit==='m3'?d.consM3:d.consM3/31.746;
+  q('s-cons').value=consumptionToPos(consVal);
+  q('s-price').value=Math.round(unit==='m3'?d.priceM3*100:d.priceM3*31.746*100);
+  q('s-lek').value=d.lek; q('s-rend').value=d.rend; q('s-piek').value=d.piek;
+  q('s-install').value=d.install; q('s-monthly').value=d.monthly;
+  q('s-verz').value=d.verz; q('s-boete').value=d.boete;
+  q('s-stilstand').value=d.stilstand; q('s-eed').value=d.eed;
+}
+
+// Donut SVG
+function donutSVG(items){
+  const total=items.reduce((a,b)=>a+b.v,0)||1;
+  const r=50,cx=70,cy=70; let angle=-Math.PI/2,paths='',legend='';
+  items.forEach(it=>{
+    if(it.v<=0)return;
+    const pct=it.v/total,a1=angle,a2=angle+pct*Math.PI*2;
+    const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1),x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2),lg=pct>0.5?1:0;
+    paths+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${lg},1 ${x2},${y2} Z" fill="${it.c}" stroke="#fff" stroke-width="1.5"/>`;
+    angle=a2;
+  });
+  paths+=`<circle cx="${cx}" cy="${cy}" r="30" fill="white"/>`;
+  items.filter(i=>i.v>0).forEach(it=>{ legend+=`<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);margin-bottom:3px"><div style="width:10px;height:10px;border-radius:2px;background:${it.c};flex-shrink:0"></div><span>${it.l}: ${Math.round(it.v/total*100)}%</span></div>`; });
+  return `<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap"><svg width="140" height="140" viewBox="0 0 140 140">${paths}</svg><div style="flex:1">${legend}</div></div>`;
+}
+
+function calc(){
+  const sector  = q('s-sector').value;
+  const d       = DEF[sector];
+  const meters  = +q('s-meters').value;
+  const consM3  = getConsM3();
+  const rawCons = getConsumptionInNaturalUnit();
+  const priceM3 = getPriceM3();
+  const lek     = +q('s-lek').value;
+  const rend    = +q('s-rend').value;
+  const piek    = +q('s-piek').value;
+  const install = +q('s-install').value;
+  const monthly = +q('s-monthly').value;
+  const verz    = +q('s-verz').value;
+  const boete   = +q('s-boete').value;
+  const stilstand=+q('s-stilstand').value;
+  const eed     = +q('s-eed').value;
+
+  // Display labels
+  q('v-meters').textContent = meters;
+  const unitLabel = unit==='m3'?'m³':'GJ';
+  q('v-cons').textContent   = rawCons.toLocaleString('nl-NL')+' '+unitLabel;
+  const priceDisplay = unit==='m3' ? '€\u00a0'+(+q('s-price').value/100).toFixed(2).replace('.',',') : '€\u00a0'+(+q('s-price').value/100).toFixed(2).replace('.',',');
+  q('v-price').textContent  = priceDisplay;
+  const consInOther = unit==='m3'?(consM3/31.746).toFixed(0)+' GJ':(consM3).toLocaleString('nl-NL')+' m³';
+  q('h-cons').textContent   = '= '+consInOther+' · Klein kantoor ≈ 5.000–20.000 m³ · Restaurant ≈ 20.000–80.000 m³ · Fabriek 100k–10M m³';
+  q('v-lek').textContent    = lek+'%';
+  q('v-rend').textContent   = rend+'%';
+  q('v-piek').textContent   = piek+'%';
+  q('v-install').textContent= euro(install);
+  q('v-monthly').textContent= euro(monthly);
+  q('v-verz').textContent   = euro(verz);
+  q('v-boete').textContent  = euro(boete);
+  q('v-stilstand').textContent=euro(stilstand);
+  q('v-eed').textContent    = euro(eed);
+  q('badge').textContent    = d?.lbl||sector;
+
+  // Core calc — all in €
+  const annGasKosten = consM3 * priceM3;
+  const savLek   = annGasKosten * (lek/100);
+  const savRend  = annGasKosten * (rend/100);
+  const savPiek  = annGasKosten * (piek/100);
+  const savGas   = savLek + savRend + savPiek;
+  const savSafety= verz + boete + stilstand + eed;
+  const totBen   = savGas + savSafety;
+  const annCost  = monthly * 12;
+  const yr1cost  = install + annCost;
+  const payback  = totBen>0 ? Math.round(install/(totBen/12)) : 999;
+  const npv3     = totBen*3 - install - annCost*3;
+
+  // Saving box
+  q('sb1').textContent = euroK(savLek);
+  q('sb2').textContent = euroK(savRend);
+  q('sb3').textContent = euroK(savPiek);
+  q('sbt').textContent = euroK(savGas);
+
+  // Safety box
+  q('safe1').textContent = euroK(verz);
+  q('safe2').textContent = euroK(boete);
+  q('safe3').textContent = euroK(stilstand);
+  q('safet').textContent = euroK(savSafety);
+
+  // KPI's
+  q('r-gasbesparing').textContent = euroK(savGas);
+  q('r-safety').textContent       = euroK(savSafety);
+  q('r-payback').textContent      = mnd(payback);
+  q('r-npv').textContent          = euroK(npv3);
+
+  // Verdict
+  const vEl=q('verdict'); let bg,ic,col,msg;
+  if(payback<=18)     {bg='var(--green-bg)';ic='✓';col='var(--green)';msg=`<strong>Uitstekende business case.</strong> Terugverdientijd van <strong>${payback} maanden</strong> — ruim onder 18 maanden. 3-jaar netto voordeel: <strong>${euroK(npv3)}</strong>.`;}
+  else if(payback<=36){bg='var(--blue-bg)'; ic='i';col='var(--mid)';  msg=`<strong>Solide business case.</strong> Terugverdientijd van <strong>${payback} maanden</strong>. Benadruk de veiligheidswaarde van <strong>${euroK(savSafety)}/jr</strong> als extra overtuigingsargument.`;}
+  else                {bg='var(--amber-bg)';ic='!';col='var(--amber)';msg=`<strong>Business case verdient versterking.</strong> Terugverdientijd van <strong>${payback} maanden</strong>. Verhoog lekverliezen of veiligheidswaarden, of verlaag de installatiekosten.`;}
+  vEl.style.background=bg;
+  vEl.innerHTML=`<div class="vi" style="background:${col}">${ic}</div><p style="font-size:13px;line-height:1.6;color:var(--text)">${msg}</p>`;
+
+  // Cashflow
+  const yrs=['Jaar 1','Jaar 2','Jaar 3','Jaar 4','Jaar 5'];
+  const cum=yrs.map((_,i)=>totBen*(i+1)-install-annCost*(i+1));
+  const maxA=Math.max(...cum.map(Math.abs),1);
+  q('cashflow-chart').innerHTML=yrs.map((y,i)=>{
+    const v=cum[i],pct=Math.max(Math.round((Math.abs(v)/maxA)*100),3);
+    const c=v>=0?'#1B4F84':'#A32D2D',tc=v>=0?'var(--mid)':'var(--red)';
+    return `<div class="trow"><div class="tq">${y}</div><div class="ttrack"><div class="tfill" style="width:${pct}%;background:${c}"></div></div><div class="tval" style="color:${tc}">${euroK(v)}</div></div>`;
+  }).join('');
+
+  // Baten donut
+  q('baten-chart').innerHTML=donutSVG([
+    {l:'Lekverliezen',       v:savLek,   c:'#002147'},
+    {l:'Rendementverbetering',v:savRend, c:'#E8720C'},
+    {l:'Piekverbruik',       v:savPiek,  c:'#1B4F84'},
+    {l:'Veiligheid/compliance',v:savSafety,c:'#00AEEF'},
+  ]);
+
+  // Kosten donut
+  q('kosten-chart').innerHTML=donutSVG([
+    {l:'Installatie',v:install, c:'#002147'},
+    {l:'SLA jaar 1', v:annCost, c:'#2E75B6'},
+  ]);
+
+  // Scenario (lekverliezen variëren)
+  const scens=[
+    {lbl:'Laag (1%)',     lek:1},
+    {lbl:'Gemiddeld ★',  lek:lek},
+    {lbl:'Hoog (8%)',     lek:8},
+    {lbl:'Zeer hoog (12%)',lek:12},
+  ];
+  q('scen-body').innerHTML=scens.map((sc,i)=>{
+    const sL=annGasKosten*(sc.lek/100),sR=savRend,sP=savPiek;
+    const tB=sL+sR+sP+savSafety,pb=tB>0?Math.round(install/(tB/12)):999,n3=tB*3-install-annCost*3;
+    const pc=pb<=18?'g':pb<=36?'w':'r';
+    const bold=i===1?'style="font-weight:700"':'';
+    return `<tr ${bold}><td>${sc.lbl}</td><td class="n">${sc.lek}%</td><td class="n">${euroK(sL)}</td><td class="n">${euroK(tB)}</td><td class="n ${pc}">${mnd(pb)}</td><td class="n ${n3>=0?'g':'r'}">${euroK(n3)}</td></tr>`;
+  }).join('');
+
+  // Monthly
+  const mnds=['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const baseM=annGasKosten/12,savedM=savGas/12,slaM=monthly;
+  const maxM=Math.max(baseM,1);
+  q('monthly-chart').innerHTML=`
+    <div style="margin-bottom:.75rem">
+      ${mnds.map(m=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <div style="font-size:11px;color:var(--muted);width:28px;flex-shrink:0">${m}</div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+          <div style="height:10px;background:var(--bg);border-radius:2px;overflow:hidden;border:1px solid var(--border)"><div style="height:100%;width:${Math.round((baseM/maxM)*100)}%;background:#002147;border-radius:2px"></div></div>
+          <div style="height:10px;background:var(--bg);border-radius:2px;overflow:hidden;border:1px solid var(--border)"><div style="height:100%;width:${Math.round(((baseM-savedM)/maxM)*100)}%;background:#E8720C;border-radius:2px"></div></div>
+        </div>
+        <div style="font-size:11px;font-family:monospace;color:var(--mid);width:70px;text-align:right">${euroK(baseM-savedM)}</div>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:1.5rem;font-size:11px;color:var(--muted);flex-wrap:wrap">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#002147;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Vóór: ${euroK(baseM)}/mnd</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#E8720C;border-radius:2px;margin-right:4px;vertical-align:middle"></span>Ná: ${euroK(baseM-savedM)}/mnd</span>
+    </div>`;
+
+  // Print meta
+  q('pm-naam').textContent    = q('k-naam').value||'—';
+  q('pm-contact').textContent = q('k-contact').value||'—';
+  q('pm-sector').textContent  = d?.lbl||sector;
+  q('pm-datum').textContent   = new Date().toLocaleDateString('nl-NL');
+}
+
+// Save
+q('btn-save').addEventListener('click',()=>{
+  const html=document.documentElement.outerHTML;
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const naam=(q('k-naam').value||'gas-roi').replace(/[^a-z0-9]/gi,'-').toLowerCase();
+  a.href=url; a.download=naam+'-gas-roi.html'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+// Event listeners
+['s-sector','s-meters','s-cons','s-price','s-lek','s-rend','s-piek',
+ 's-install','s-monthly','s-verz','s-boete','s-stilstand','s-eed','s-pkg','k-naam','k-contact']
+  .forEach(id=>{
+    const el=q(id); if(!el) return;
+    el.addEventListener('input', ()=>{ if(id==='s-sector')applyDefaults(); else calc(); });
+    el.addEventListener('change',()=>{ if(id==='s-sector')applyDefaults(); else calc(); });
+  });
+
+applyDefaults();
+calc();
+</script>
+</body>
+</html>
